@@ -4,13 +4,20 @@
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/LICENSE.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles/Quickstart.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles/connections.html</loc></url>
+<url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles/downloads.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles/index.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/authors.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/index.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/connections.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/create_connection.html</loc></url>
+<url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/download_tables.html</loc></url>
+<url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/downloads.html</loc></url>
+<url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/get_available_years.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/index.html</loc></url>
+<url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/optimal_cores.html</loc></url>
+<url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/parallel_download.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/safe_disconnect.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/setup_credentials.html</loc></url>
+<url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/simple_download.html</loc></url>
 </urlset>
 

@@ -3,8 +3,9 @@ pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   connections: connections.html
+  downloads: downloads.html
   Quickstart: Quickstart.html
-last_built: 2026-02-10T18:09Z
+last_built: 2026-02-10T18:23Z
 urls:
   reference: https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference
   article: https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles
