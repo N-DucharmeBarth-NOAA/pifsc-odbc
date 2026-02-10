@@ -8,25 +8,101 @@
 [![R-CMD-check](https://github.com/N-DucharmeBarth-NOAA/pifsc-odbc/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/N-DucharmeBarth-NOAA/pifsc-odbc/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The goal of pifsc.odbc is to …
+Parallel download tools for Oracle databases at PIFSC. The package
+provides efficient multi-core data extraction from fisheries logbook
+datasets with automatic credential management, year-based partitioning,
+and progress tracking.
+
+## Key Features
+
+- **Secure credential storage** using the system keyring
+- **Parallel downloads** with automatic year-based partitioning
+- **Flexible workflows** for single tables or batch processing
+- **Progress tracking** with performance metrics
+- **Optimized for large datasets** common in fisheries research
+
+## Prerequisites
+
+1.  **Oracle Instant Client 23.9+** with ODBC component installed
+2.  **PIFSC network** or **NOAA VPN** connection for database access
+
+See `vignette("connections")` for detailed setup instructions.
 
 ## Installation
-
-You can install the development version of pifsc.odbc from
-[GitHub](https://github.com/) with:
-
-# install.packages(“renv”)
 
 ``` r
 # install.packages("renv")
 renv::install("N-DucharmeBarth-NOAA/pifsc-odbc")
 ```
 
-## Example
+## Quick Start
 
-This is a basic example which shows you how to solve a common problem:
+### One-time setup
+
+Store your database credentials (only needed once per machine):
 
 ``` r
 library(pifsc.odbc)
-## basic example code
+setup_credentials()
 ```
+
+### Download a single table
+
+``` r
+# Parallel download with automatic year detection
+hdr <- parallel_download(
+  table = "LLDS_HDR_20240315HAC",
+  year_col = "LANDYR"
+)
+
+# Download specific years
+hdr_recent <- parallel_download(
+  table = "LLDS_HDR_20240315HAC",
+  year_col = "LANDYR",
+  years = 2015:2023,
+  n_cores = 4
+)
+```
+
+### Download multiple tables
+
+``` r
+tables <- list(
+  list(table = "LLDS_HDR_20240315HAC", year_col = "LANDYR"),
+  list(table = "LLDS_DETAIL_20240315HAC", year_col = "HDR_LANDYR")
+)
+
+# Download and save to CSV
+results <- download_tables(tables, output_dir = "logbook-data")
+```
+
+### Simple single-threaded download
+
+For small tables or when parallel connections aren’t needed:
+
+``` r
+ref <- simple_download(table = "LLDS_SOME_REF_TABLE")
+```
+
+## Documentation
+
+- [Database
+  Connections](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles/connections.html) -
+  Setup and connection management
+- [Parallel
+  Downloads](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles/downloads.html) -
+  Download strategies and performance tuning
+
+## How It Works
+
+The parallel download strategy:
+
+1.  Queries the database to find available years
+2.  Splits years evenly across worker cores
+3.  Each worker opens its own connection, downloads assigned years, and
+    disconnects
+4.  Results are combined into a single `data.table`
+
+This approach limits concurrent connections to the number of cores,
+making it database-friendly while achieving significant speedups for
+large tables.
