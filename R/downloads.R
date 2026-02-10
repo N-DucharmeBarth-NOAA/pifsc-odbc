@@ -3,6 +3,7 @@
 #'   with automatic year-based partitioning and chunked downloads across
 #'   multiple cores.
 #' @name downloads
+#' @importFrom foreach %dopar%
 NULL
 
 

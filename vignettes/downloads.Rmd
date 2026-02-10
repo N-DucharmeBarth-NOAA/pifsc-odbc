@@ -1,0 +1,149 @@
+---
+title: "Parallel Downloads"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Parallel Downloads}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+## Overview
+
+Large fisheries logbook tables can be slow to download over a single
+connection. `pifsc.odbc` speeds this up by partitioning tables by year and
+downloading chunks in parallel across multiple database connections.
+
+Make sure you have completed the one-time setup steps described in
+`vignette("connections")` before using the download functions.
+
+## Downloading a single table
+
+### Parallel download
+
+Use `parallel_download()` to download one table. The function automatically
+detects available years and selects an appropriate number of cores:
+
+```{r}
+library(pifsc.odbc)
+
+hdr <- parallel_download(
+  table = "LLDS_HDR_20240315HAC",
+  year_col = "LANDYR"
+)
+```
+
+You can restrict the download to specific years or control the number of
+parallel workers:
+
+```{r}
+hdr_recent <- parallel_download(
+  table = "LLDS_HDR_20240315HAC",
+  year_col = "LANDYR",
+  years = 2015:2023,
+  n_cores = 4
+)
+```
+
+### Single-threaded download
+
+For small tables or environments where parallel connections are not available,
+use `simple_download()`:
+
+```{r}
+# Download an entire table (no year filtering)
+ref <- simple_download(table = "LLDS_SOME_REF_TABLE")
+
+# Download specific years
+hdr_recent <- simple_download(
+  table = "LLDS_HDR_20240315HAC",
+  year_col = "LANDYR",
+  years = 2020:2023
+)
+```
+
+`simple_download()` opens a single connection, downloads the data, and
+disconnects. It accepts the same `year_col`, `years`, and `connection_args`
+arguments as `parallel_download()` so switching between the two is
+straightforward.
+
+## Downloading multiple tables
+
+`download_tables()` processes a list of table definitions sequentially,
+downloading each one in parallel. Provide an `output_dir` to save results as
+CSVs:
+
+```{r}
+tables <- list(
+  list(table = "LLDS_HDR_20240315HAC", year_col = "LANDYR"),
+  list(table = "LLDS_DETAIL_20240315HAC", year_col = "HDR_LANDYR")
+)
+
+results <- download_tables(tables, output_dir = "logbook-data")
+```
+
+The return value is a named list of `data.table` objects, so you can also
+work with the data directly in R:
+
+```{r}
+hdr <- results[["LLDS_HDR_20240315HAC"]]
+detail <- results[["LLDS_DETAIL_20240315HAC"]]
+```
+
+If you omit `output_dir`, data is returned but not written to disk:
+
+```{r}
+results <- download_tables(tables)
+```
+
+## Core selection
+
+By default, `parallel_download()` and `download_tables()` use
+`optimal_cores()` to pick the number of workers. This uses 75% of your
+available cores, bounded between 2 and 8 to avoid overloading the database:
+
+```{r}
+optimal_cores()      # uses default max of 8
+optimal_cores(max_cores = 4)  # cap at 4
+```
+
+You can override this per download with the `n_cores` argument.
+
+## Custom connection parameters
+
+If you use non-default connection settings (e.g., custom keyring service
+names or a different driver), pass them via `connection_args`:
+
+```{r}
+results <- download_tables(
+  tables,
+  connection_args = list(
+    uid_service = "MY_DB_user",
+    pwd_service = "MY_DB_pwd",
+    driver = "Oracle in instantclient_21_3"
+  )
+)
+```
+
+These arguments are forwarded to `create_connection()` in every worker.
+
+## How it works
+
+The parallel download strategy:
+
+1. Open a single connection to query the distinct years available in the table
+2. Split years evenly across workers
+3. Each worker opens its own database connection, downloads its assigned
+   years, and disconnects
+4. Results are combined into a single `data.table`
+
+This approach keeps the total number of concurrent database connections equal
+to the number of cores, which is friendlier to the database than opening one
+connection per year.
