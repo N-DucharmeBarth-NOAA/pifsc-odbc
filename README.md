@@ -14,11 +14,11 @@ The goal of pifsc.odbc is to …
 You can install the development version of pifsc.odbc from
 [GitHub](https://github.com/) with:
 
-# install.packages(“pak”)
+# install.packages(“renv”)
 
 ``` r
-# install.packages("pak")
-pak::pak("N-DucharmeBarth-NOAA/pifsc-odbc")
+# install.packages("renv")
+renv::install("N-DucharmeBarth-NOAA/pifsc-odbc")
 ```
 
 ## Example
