@@ -29,7 +29,10 @@ setup_credentials <- function(uid_service = "PIFSC_Logbook_user",
     stop("setup_credentials() must be run in an interactive R session.")
   }
 
+  cat("You will be prompted to enter your username and password.\n")
+  cat("Setting username...\n")
   keyring::key_set(uid_service)
+  cat("Setting password...\n")
   keyring::key_set(pwd_service)
 
   cat("Credentials stored successfully.\n")
