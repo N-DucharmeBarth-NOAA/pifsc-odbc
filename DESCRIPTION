@@ -1,6 +1,6 @@
 Package: pifsc.odbc
 Title: Oracle Database Tools for PIFSC Fisheries Data
-Version: 0.1.0
+Version: 1.0.0
 Authors@R: 
     person("Nicholas", "Ducharme-Barth", , "nicholas.ducharme-barth@noaa.gov", role = c("aut", "cre"))
 Description: Parallel download tools for Oracle databases at PIFSC. Provides 
