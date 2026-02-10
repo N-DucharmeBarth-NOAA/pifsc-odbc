@@ -1,0 +1,114 @@
+# Database Connections
+
+## Prerequisites
+
+Before using `pifsc.odbc` you need to complete two one-time setup steps:
+installing the Oracle ODBC driver and storing your database credentials.
+
+You must also be connected to the **PIFSC network** or the **NOAA VPN**
+for all database connections.
+
+### 1. Install Oracle Instant Client
+
+The package requires an Oracle ODBC driver to communicate with the
+database. Download and install [Oracle Instant
+Client](https://www.oracle.com/database/technologies/instant-client/downloads.html)
+(version 23.9 or later) for your operating system. Make sure to include
+the ODBC component during installation. After installation, verify the
+driver is available:
+
+``` r
+odbc::odbcListDrivers()
+```
+
+You should see an entry named `Oracle in instantclient_23_9` (or
+similar). If the driver name differs on your machine, you can pass your
+driver name to
+[`create_connection()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/create_connection.md)
+via the `driver` argument.
+
+### 2. Store database credentials
+
+`pifsc.odbc` uses the [keyring](https://r-lib.github.io/keyring/)
+package to securely store your Oracle username and password in your
+operating system’s credential manager. This only needs to be done once
+per machine — credentials persist across R sessions.
+
+Run the following in an **interactive** R session:
+
+``` r
+library(pifsc.odbc)
+setup_credentials()
+```
+
+You will be prompted to enter your username and password. These are
+stored under the service names `PIFSC_Logbook_user` and
+`PIFSC_Logbook_pwd` by default.
+
+If you prefer different service names (e.g., to manage credentials for
+multiple databases), you can specify them during setup:
+
+``` r
+setup_credentials(uid_service = "MY_DB_user", pwd_service = "MY_DB_pwd")
+```
+
+You will then need to pass the same service names when creating a
+connection:
+
+``` r
+con <- create_connection(uid_service = "MY_DB_user", pwd_service = "MY_DB_pwd")
+```
+
+## Opening a connection
+
+Once the prerequisites are in place, connecting to the logbook database
+is straightforward:
+
+``` r
+library(pifsc.odbc)
+
+con <- create_connection()
+```
+
+This returns a standard DBI connection object. You can use it with any
+DBI-compatible function:
+
+``` r
+# List available tables
+DBI::dbListTables(con)
+
+# Run a query
+result <- DBI::dbGetQuery(con, "SELECT * FROM llds.SOME_TABLE WHERE ROWNUM <= 10")
+```
+
+### Custom connection parameters
+
+If you need to connect to a different database or use non-default
+settings, all parameters can be overridden:
+
+``` r
+con <- create_connection(
+  host = "other-db.nmfs.local",
+  port = 1521,
+  sid = "other.service.name",
+  driver = "Oracle in instantclient_21_3",
+  timeout = 30
+)
+```
+
+## Closing a connection
+
+Always close your connection when finished. Use
+[`safe_disconnect()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/safe_disconnect.md)
+for error-tolerant cleanup, which is especially useful in scripts and
+parallel workers:
+
+``` r
+safe_disconnect(con)
+```
+
+Or use the standard DBI approach:
+
+``` r
+DBI::dbDisconnect(con)
+```

@@ -1,0 +1,47 @@
+# pifsc.odbc
+
+The goal of pifsc.odbc is to …
+
+## Installation
+
+You can install the development version of pifsc.odbc from
+[GitHub](https://github.com/) with:
+
+# install.packages(“renv”)
+
+``` r
+# install.packages("renv")
+renv::install("N-DucharmeBarth-NOAA/pifsc-odbc")
+```
+
+## Example
+
+This is a basic example which shows you how to solve a common problem:
+
+``` r
+library(pifsc.odbc)
+## basic example code
+```
+
+# Package index
+
+## All functions
+
+- [`connections`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/connections.md)
+  : Database Connection Management Functions for establishing and
+  managing Oracle database connections using keyring-based credential
+  storage.
+- [`create_connection()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/create_connection.md)
+  : Create an Oracle database connection
+- [`safe_disconnect()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/safe_disconnect.md)
+  : Safely disconnect from a database
+- [`setup_credentials()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/setup_credentials.md)
+  : Set up database credentials in the system keyring
+
+# Articles
+
+### All vignettes
+
+- [Database
+  Connections](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles/connections.md):
+- [Quickstart](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles/Quickstart.md):
