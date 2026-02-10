@@ -10,7 +10,7 @@ Description: Parallel download tools for Oracle databases at PIFSC. Provides
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.0.0
+RoxygenNote: 7.3.3
 Imports: 
     data.table,
     doParallel,
@@ -25,3 +25,4 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 VignetteBuilder: knitr
+URL: https://n-ducharmebarth-noaa.github.io/pifsc-odbc/

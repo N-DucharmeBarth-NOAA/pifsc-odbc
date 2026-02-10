@@ -16,6 +16,7 @@ knitr::opts_chunk$set(
 # pifsc.odbc
 
 <!-- badges: start -->
+[![R-CMD-check](https://github.com/N-DucharmeBarth-NOAA/pifsc-odbc/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/N-DucharmeBarth-NOAA/pifsc-odbc/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
 The goal of pifsc.odbc is to ...

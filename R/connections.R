@@ -1,8 +1,8 @@
-#' @title Database Connection Management
-#' @description Functions for establishing and managing Oracle database connections
+#' Database Connection Management
+#' Functions for establishing and managing Oracle database connections
 #'   using keyring-based credential storage.
 #' @name connections
-
+NULL
 
 #' Set up database credentials in the system keyring
 #'
