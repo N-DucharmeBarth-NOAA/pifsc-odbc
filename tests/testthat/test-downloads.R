@@ -73,15 +73,29 @@ test_that("download_tables() creates output directory if needed", {
   unlink(tmp, recursive = TRUE)
 })
 
+# --- parallel_dsn_download() ---
+
+test_that("parallel_dsn_download() has expected arguments and defaults", {
+  args <- formals(parallel_dsn_download)
+  expect_equal(args$schema, "newobs")
+  expect_equal(args$dsn, "PIRO LOTUS")
+  expect_null(args$years)
+  expect_null(args$n_cores)
+  expect_true("table" %in% names(args))
+  expect_true("year_col" %in% names(args))
+})
+
 # --- download_observer_tables() ---
 
 test_that("download_observer_tables() has expected arguments and defaults", {
   args <- formals(download_observer_tables)
-  expect_equal(args$tables, c("LDS_SET_ENVIRON_V", "LDS_CATCH_V", "LDS_GEAR_CFG_V"))
+  expect_equal(eval(args$tables), c("LDS_SET_ENVIRON_V", "LDS_CATCH_V", "LDS_GEAR_CFG_V"))
   expect_equal(args$schema, "newobs")
   expect_equal(args$dsn, "PIRO LOTUS")
   expect_null(args$output_dir)
   expect_equal(args$timestamp, TRUE)
+  expect_equal(args$year_col, "HAULBEGIN_YR")
+  expect_null(args$n_cores)
 })
 
 test_that("download_observer_tables() creates output directory if needed", {

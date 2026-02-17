@@ -9,7 +9,9 @@ download_observer_tables(
   schema = "newobs",
   dsn = "PIRO LOTUS",
   output_dir = NULL,
-  timestamp = TRUE
+  timestamp = TRUE,
+  year_col = "HAULBEGIN_YR",
+  n_cores = NULL
 )
 }
 \arguments{
@@ -26,18 +28,27 @@ download_observer_tables(
 \item{timestamp}{Logical. If TRUE and \code{output_dir} is provided, append
 timestamp to output filenames in format TABLE_YYYYMMDDHHMMSS.csv.
 Default: TRUE.}
+
+\item{year_col}{Character or NULL. Name of the year column used for parallel
+partitioning. If NULL, tables are downloaded sequentially with a single
+connection. Default: "HAULBEGIN_YR".}
+
+\item{n_cores}{Integer or NULL. Number of parallel workers. If NULL
+(default), determined by \code{optimal_cores()}. Ignored when
+\code{year_col} is NULL.}
 }
 \value{
 A named list of \code{data.table} objects, one per table.
 }
 \description{
 Convenience function for downloading observer data from the PIRO LOTUS
-database using a DSN connection. Downloads tables sequentially using a
-single connection and optionally saves results to CSV files.
+database using a DSN connection. By default, tables are downloaded in
+parallel by partitioning on a year column. Set \code{year_col = NULL} to
+fall back to sequential single-threaded downloads.
 }
 \examples{
 \dontrun{
-# Download default tables and return data
+# Download default tables in parallel (uses HAULBEGIN_YR)
 obs <- download_observer_tables()
 
 # Download and save to disk with timestamps
@@ -48,5 +59,8 @@ obs <- download_observer_tables(
   tables = c("LDS_CATCH_V", "LDS_SET_ENVIRON_V"),
   output_dir = "obs-data"
 )
+
+# Fall back to single-threaded download
+obs <- download_observer_tables(year_col = NULL)
 }
 }

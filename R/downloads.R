@@ -342,11 +342,125 @@ download_tables <- function(table_info,
 }
 
 
+#' Download a DSN table in parallel by year
+#'
+#' Partitions a table accessible via an ODBC Data Source Name (DSN) by a year
+#' column and downloads chunks in parallel. Each worker opens its own DSN
+#' connection, downloads its assigned years, and disconnects. This is the
+#' DSN equivalent of \code{\link{parallel_download}}, which targets Oracle
+#' connections.
+#'
+#' @param table Character. Table name.
+#' @param year_col Character. Name of the year column used for partitioning.
+#' @param schema Character. Schema name. Default: "newobs".
+#' @param dsn Character. ODBC Data Source Name. Default: "PIRO LOTUS".
+#' @param years Integer vector. Years to download. If NULL (default), all
+#'   available years are queried automatically.
+#' @param n_cores Integer. Number of parallel workers. If NULL (default),
+#'   determined by \code{optimal_cores()}.
+#'
+#' @return A \code{data.table} containing all downloaded rows.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Download with automatic year detection and core selection
+#' catch <- parallel_dsn_download(
+#'   table = "LDS_CATCH_V",
+#'   year_col = "HAULBEGIN_YR"
+#' )
+#'
+#' # Download specific years with custom core count
+#' environ <- parallel_dsn_download(
+#'   table = "LDS_SET_ENVIRON_V",
+#'   year_col = "HAULBEGIN_YR",
+#'   years = 2015:2023,
+#'   n_cores = 4
+#' )
+#' }
+parallel_dsn_download <- function(table,
+                                  year_col,
+                                  schema = "newobs",
+                                  dsn = "PIRO LOTUS",
+                                  years = NULL,
+                                  n_cores = NULL) {
+
+  # Determine cores
+  if (is.null(n_cores)) {
+    n_cores <- optimal_cores()
+  }
+
+  # If years not supplied, query them
+  if (is.null(years)) {
+    cat("Querying available years for", table, "...\n")
+    con <- create_dsn_connection(dsn)
+    years <- get_available_years(con, schema = schema, table = table, year_col = year_col)
+    safe_disconnect(con)
+    cat("Found years:", min(years), "to", max(years), "(", length(years), "years)\n")
+  }
+
+  cat("Downloading", table, "using", n_cores, "cores...\n")
+  start_time <- Sys.time()
+
+  # Split years across cores
+  year_chunks <- split(years, cut(seq_along(years), n_cores, labels = FALSE))
+
+  # Set up cluster
+  cl <- parallel::makeCluster(n_cores)
+  doParallel::registerDoParallel(cl)
+  on.exit({
+    parallel::stopCluster(cl)
+  }, add = TRUE)
+
+  # Parallel download
+  table_data <- foreach::foreach(
+    year_chunk = year_chunks,
+    .combine = function(...) data.table::rbindlist(list(...)),
+    .packages = c("DBI", "odbc", "data.table")
+  ) %dopar% {
+    # Each worker opens its own DSN connection
+    worker_con <- pifsc.odbc::create_dsn_connection(dsn)
+
+    worker_data <- data.table::data.table()
+
+    for (year in year_chunk) {
+      year_data <- tryCatch({
+        sql <- paste0(
+          "SELECT * FROM ", schema, ".", table,
+          " WHERE ", year_col, " = ", year
+        )
+        data.table::as.data.table(DBI::dbGetQuery(worker_con, sql))
+      }, error = function(e) {
+        cat("Error for year", year, "in", table, ":", e$message, "\n")
+        data.table::data.table()
+      })
+
+      if (nrow(year_data) > 0) {
+        worker_data <- data.table::rbindlist(list(worker_data, year_data))
+        cat("Table", table, "- Year", year, ":", nrow(year_data), "rows\n")
+      }
+    }
+
+    pifsc.odbc::safe_disconnect(worker_con)
+    worker_data
+  }
+
+  # Report results
+  elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
+  cat("Downloaded", nrow(table_data), "rows from", table,
+      "in", round(elapsed, 1), "sec",
+      "(", round(nrow(table_data) / max(elapsed, 0.001), 0), "rows/sec)\n")
+
+  table_data
+}
+
+
 #' Download observer tables from LOTUS database
 #'
 #' Convenience function for downloading observer data from the PIRO LOTUS
-#' database using a DSN connection. Downloads tables sequentially using a
-#' single connection and optionally saves results to CSV files.
+#' database using a DSN connection. By default, tables are downloaded in
+#' parallel by partitioning on a year column. Set \code{year_col = NULL} to
+#' fall back to sequential single-threaded downloads.
 #'
 #' @param tables Character vector. Table names to download. Default:
 #'   \code{c("LDS_SET_ENVIRON_V", "LDS_CATCH_V", "LDS_GEAR_CFG_V")}.
@@ -357,13 +471,19 @@ download_tables <- function(table_info,
 #' @param timestamp Logical. If TRUE and \code{output_dir} is provided, append
 #'   timestamp to output filenames in format TABLE_YYYYMMDDHHMMSS.csv.
 #'   Default: TRUE.
+#' @param year_col Character or NULL. Name of the year column used for parallel
+#'   partitioning. If NULL, tables are downloaded sequentially with a single
+#'   connection. Default: "HAULBEGIN_YR".
+#' @param n_cores Integer or NULL. Number of parallel workers. If NULL
+#'   (default), determined by \code{optimal_cores()}. Ignored when
+#'   \code{year_col} is NULL.
 #'
 #' @return A named list of \code{data.table} objects, one per table.
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' # Download default tables and return data
+#' # Download default tables in parallel (uses HAULBEGIN_YR)
 #' obs <- download_observer_tables()
 #'
 #' # Download and save to disk with timestamps
@@ -374,33 +494,51 @@ download_tables <- function(table_info,
 #'   tables = c("LDS_CATCH_V", "LDS_SET_ENVIRON_V"),
 #'   output_dir = "obs-data"
 #' )
+#'
+#' # Fall back to single-threaded download
+#' obs <- download_observer_tables(year_col = NULL)
 #' }
 download_observer_tables <- function(
     tables = c("LDS_SET_ENVIRON_V", "LDS_CATCH_V", "LDS_GEAR_CFG_V"),
     schema = "newobs",
     dsn = "PIRO LOTUS",
     output_dir = NULL,
-    timestamp = TRUE) {
+    timestamp = TRUE,
+    year_col = "HAULBEGIN_YR",
+    n_cores = NULL) {
 
   if (!is.null(output_dir) && !dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE)
   }
 
   start_time <- Sys.time()
-  cat("Connecting to", dsn, "...\n")
-  con <- create_dsn_connection(dsn)
-  on.exit(safe_disconnect(con), add = TRUE)
-
   results <- list()
+
+  # Sequential mode when no year_col is provided
+  if (is.null(year_col)) {
+    cat("Connecting to", dsn, "...\n")
+    con <- create_dsn_connection(dsn)
+    on.exit(safe_disconnect(con), add = TRUE)
+  }
 
   for (table in tables) {
     cat("\n=== Downloading table:", table, "===\n")
 
-    dt <- simple_download(
-      table = table,
-      schema = schema,
-      con = con
-    )
+    if (!is.null(year_col)) {
+      dt <- parallel_dsn_download(
+        table = table,
+        year_col = year_col,
+        schema = schema,
+        dsn = dsn,
+        n_cores = n_cores
+      )
+    } else {
+      dt <- simple_download(
+        table = table,
+        schema = schema,
+        con = con
+      )
+    }
 
     if (!is.null(output_dir) && nrow(dt) > 0) {
       if (timestamp) {
