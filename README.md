@@ -84,15 +84,6 @@ For small tables or when parallel connections aren’t needed:
 ref <- simple_download(table = "LLDS_SOME_REF_TABLE")
 ```
 
-### Download observer data
-
-Download observer tables from the PIRO LOTUS database:
-
-``` r
-# Download observer tables from LOTUS
-obs <- download_observer_tables(output_dir = "obs-data")
-```
-
 ## Documentation
 
 - [Database
