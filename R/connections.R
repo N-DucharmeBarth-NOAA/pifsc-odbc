@@ -82,6 +82,36 @@ create_connection <- function(host = "picdb.nmfs.local",
 }
 
 
+#' Create a connection using a pre-configured ODBC DSN
+#'
+#' Establishes a connection to a database using a pre-configured ODBC Data
+#' Source Name (DSN). This is useful for databases that use Windows authentication
+#' or other authentication methods not requiring credentials in R. Commonly used
+#' for SQL Server databases like PIRO LOTUS observer database.
+#'
+#' @param dsn Character. The name of the ODBC Data Source Name configured in
+#'   the ODBC Data Source Administrator.
+#' @param timeout Integer. Connection timeout in seconds. Default: 10.
+#'
+#' @return An odbc connection object.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Connect to PIRO LOTUS observer database
+#' con <- create_dsn_connection("PIRO LOTUS")
+#' DBI::dbListTables(con)
+#' DBI::dbDisconnect(con)
+#' }
+create_dsn_connection <- function(dsn, timeout = 10) {
+  DBI::dbConnect(
+    odbc::odbc(),
+    dsn = dsn,
+    timeout = timeout
+  )
+}
+
+
 #' Safely disconnect from a database
 #'
 #' Wrapper around \code{DBI::dbDisconnect()} with error handling.

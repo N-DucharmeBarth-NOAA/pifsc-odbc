@@ -147,3 +147,119 @@ The parallel download strategy:
 This approach keeps the total number of concurrent database connections equal
 to the number of cores, which is friendlier to the database than opening one
 connection per year.
+
+## Downloading observer data
+
+In addition to logbook data, you can download observer data from the PIRO LOTUS
+database. By default, observer tables are downloaded in parallel by
+partitioning on the `HAULBEGIN_YR` column, just like logbook tables use year
+columns.
+
+### Using the convenience function
+
+The `download_observer_tables()` function provides a simple workflow for
+downloading the most commonly used observer tables in parallel:
+
+```{r}
+# Download default tables in parallel (LDS_SET_ENVIRON_V, LDS_CATCH_V, LDS_GEAR_CFG_V)
+obs <- download_observer_tables()
+
+# Access individual tables from the returned list
+catch <- obs[["LDS_CATCH_V"]]
+environ <- obs[["LDS_SET_ENVIRON_V"]]
+```
+
+You can control the number of parallel workers:
+
+```{r}
+obs <- download_observer_tables(n_cores = 4)
+```
+
+To save results to disk:
+
+```{r}
+# Save with timestamps (TABLE_YYYYMMDDHHMMSS.csv)
+obs <- download_observer_tables(
+  output_dir = "obs-data",
+  timestamp = TRUE
+)
+
+# Save without timestamps (TABLE.csv)
+obs <- download_observer_tables(
+  output_dir = "obs-data",
+  timestamp = FALSE
+)
+```
+
+You can also specify custom tables:
+
+```{r}
+obs <- download_observer_tables(
+  tables = c("LDS_CATCH_V", "LDS_SET_ENVIRON_V"),
+  output_dir = "obs-data"
+)
+```
+
+### Single-threaded fallback
+
+If parallel connections are not available, set `year_col = NULL` to fall back
+to sequential downloads over a single connection:
+
+```{r}
+obs <- download_observer_tables(year_col = NULL)
+```
+
+### Using parallel_dsn_download() directly
+
+For more control over individual observer tables, use `parallel_dsn_download()`
+directly. This works like `parallel_download()` but uses DSN connections
+instead of Oracle connections:
+
+```{r}
+# Download a single observer table in parallel
+catch <- parallel_dsn_download(
+  table = "LDS_CATCH_V",
+  year_col = "HAULBEGIN_YR"
+)
+
+# Download specific years with custom core count
+environ <- parallel_dsn_download(
+  table = "LDS_SET_ENVIRON_V",
+  year_col = "HAULBEGIN_YR",
+  years = 2015:2023,
+  n_cores = 4
+)
+```
+
+### Using simple_download() with a DSN connection
+
+For small tables or custom queries, you can use `simple_download()` with a
+DSN connection:
+
+```{r}
+# Open a connection
+con <- create_dsn_connection("PIRO LOTUS")
+
+# Download multiple tables using the same connection
+catch <- simple_download(
+  table = "LDS_CATCH_V",
+  schema = "newobs",
+  con = con
+)
+
+environ <- simple_download(
+  table = "LDS_SET_ENVIRON_V",
+  schema = "newobs",
+  con = con
+)
+
+# Close connection when finished
+DBI::dbDisconnect(con)
+```
+
+### Important notes
+
+- Observer tables are partitioned by `HAULBEGIN_YR` for parallel downloads
+- You must have the **PIRO LOTUS** DSN configured (see `vignette("connections")`)
+- You must be on the **PIFSC network** or **NOAA VPN**
+- Tables are in the `newobs` schema, not `llds`
