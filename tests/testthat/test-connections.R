@@ -34,6 +34,21 @@ test_that("create_connection() default arguments are correct", {
   expect_equal(args$timeout, 10)
 })
 
+# --- create_dsn_connection() ---
+
+test_that("create_dsn_connection() is a function with expected arguments", {
+  args <- formals(create_dsn_connection)
+  expect_true("dsn" %in% names(args))
+  expect_equal(args$timeout, 10)
+})
+
+test_that("create_dsn_connection() errors with non-existent DSN", {
+  expect_error(
+    create_dsn_connection(dsn = "NONEXISTENT_DSN_12345"),
+    class = "error"
+  )
+})
+
 # --- safe_disconnect() ---
 
 test_that("safe_disconnect() handles invalid connection gracefully", {

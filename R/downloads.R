@@ -179,8 +179,12 @@ parallel_download <- function(table,
 #' @param years Integer vector or NULL. Years to download. If NULL (default)
 #'   and \code{year_col} is provided, all years are downloaded. If both
 #'   \code{year_col} and \code{years} are NULL, the full table is downloaded.
+#' @param con A DBI connection object or NULL. If provided, this connection
+#'   is used directly and the caller is responsible for managing the connection
+#'   lifecycle. If NULL (default), a connection is created internally using
+#'   \code{connection_args} and disconnected on exit.
 #' @param connection_args List. Additional arguments passed to
-#'   \code{create_connection()}. Default: list().
+#'   \code{create_connection()} when \code{con} is NULL. Default: list().
 #'
 #' @return A \code{data.table} containing the downloaded rows.
 #' @export
@@ -196,18 +200,31 @@ parallel_download <- function(table,
 #'   year_col = "LANDYR",
 #'   years = 2020:2023
 #' )
+#'
+#' # Download using a provided connection (e.g., DSN connection)
+#' con <- create_dsn_connection("PIRO LOTUS")
+#' catch <- simple_download(
+#'   table = "LDS_CATCH_V",
+#'   schema = "newobs",
+#'   con = con
+#' )
+#' DBI::dbDisconnect(con)
 #' }
 simple_download <- function(table,
                             year_col = NULL,
                             schema = "llds",
                             years = NULL,
+                            con = NULL,
                             connection_args = list()) {
 
   cat("Downloading", table, "(single-threaded)...\n")
   start_time <- Sys.time()
 
-  con <- do.call(create_connection, connection_args)
-  on.exit(safe_disconnect(con), add = TRUE)
+  # Use provided connection or create a new one
+  if (is.null(con)) {
+    con <- do.call(create_connection, connection_args)
+    on.exit(safe_disconnect(con), add = TRUE)
+  }
 
   if (is.null(year_col) && is.null(years)) {
     # Download full table
@@ -319,6 +336,90 @@ download_tables <- function(table_info,
   elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
   cat("\n=== COMPLETE ===\n")
   cat("Tables processed:", length(table_info), "\n")
+  cat("Total time:", round(elapsed, 1), "seconds\n")
+
+  results
+}
+
+
+#' Download observer tables from LOTUS database
+#'
+#' Convenience function for downloading observer data from the PIRO LOTUS
+#' database using a DSN connection. Downloads tables sequentially using a
+#' single connection and optionally saves results to CSV files.
+#'
+#' @param tables Character vector. Table names to download. Default:
+#'   \code{c("LDS_SET_ENVIRON_V", "LDS_CATCH_V", "LDS_GEAR_CFG_V")}.
+#' @param schema Character. Schema name. Default: "newobs".
+#' @param dsn Character. ODBC Data Source Name. Default: "PIRO LOTUS".
+#' @param output_dir Character or NULL. Directory to save CSV files. If NULL
+#'   (default), data is returned but not saved.
+#' @param timestamp Logical. If TRUE and \code{output_dir} is provided, append
+#'   timestamp to output filenames in format TABLE_YYYYMMDDHHMMSS.csv.
+#'   Default: TRUE.
+#'
+#' @return A named list of \code{data.table} objects, one per table.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' # Download default tables and return data
+#' obs <- download_observer_tables()
+#'
+#' # Download and save to disk with timestamps
+#' obs <- download_observer_tables(output_dir = "obs-data", timestamp = TRUE)
+#'
+#' # Download custom tables
+#' obs <- download_observer_tables(
+#'   tables = c("LDS_CATCH_V", "LDS_SET_ENVIRON_V"),
+#'   output_dir = "obs-data"
+#' )
+#' }
+download_observer_tables <- function(
+    tables = c("LDS_SET_ENVIRON_V", "LDS_CATCH_V", "LDS_GEAR_CFG_V"),
+    schema = "newobs",
+    dsn = "PIRO LOTUS",
+    output_dir = NULL,
+    timestamp = TRUE) {
+
+  if (!is.null(output_dir) && !dir.exists(output_dir)) {
+    dir.create(output_dir, recursive = TRUE)
+  }
+
+  start_time <- Sys.time()
+  cat("Connecting to", dsn, "...\n")
+  con <- create_dsn_connection(dsn)
+  on.exit(safe_disconnect(con), add = TRUE)
+
+  results <- list()
+
+  for (table in tables) {
+    cat("\n=== Downloading table:", table, "===\n")
+
+    dt <- simple_download(
+      table = table,
+      schema = schema,
+      con = con
+    )
+
+    if (!is.null(output_dir) && nrow(dt) > 0) {
+      if (timestamp) {
+        timestamp_str <- format(Sys.time(), "%Y%m%d%H%M%S")
+        filename <- paste0(table, "_", timestamp_str, ".csv")
+      } else {
+        filename <- paste0(table, ".csv")
+      }
+      out_path <- file.path(output_dir, filename)
+      data.table::fwrite(dt, file = out_path)
+      cat("Saved to", out_path, "\n")
+    }
+
+    results[[table]] <- dt
+  }
+
+  elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
+  cat("\n=== COMPLETE ===\n")
+  cat("Tables downloaded:", length(tables), "\n")
   cat("Total time:", round(elapsed, 1), "seconds\n")
 
   results

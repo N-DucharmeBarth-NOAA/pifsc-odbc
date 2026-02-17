@@ -9,6 +9,7 @@ simple_download(
   year_col = NULL,
   schema = "llds",
   years = NULL,
+  con = NULL,
   connection_args = list()
 )
 }
@@ -24,8 +25,13 @@ If NULL, the entire table is downloaded.}
 and \code{year_col} is provided, all years are downloaded. If both
 \code{year_col} and \code{years} are NULL, the full table is downloaded.}
 
+\item{con}{A DBI connection object or NULL. If provided, this connection
+is used directly and the caller is responsible for managing the connection
+lifecycle. If NULL (default), a connection is created internally using
+\code{connection_args} and disconnected on exit.}
+
 \item{connection_args}{List. Additional arguments passed to
-\code{create_connection()}. Default: list().}
+\code{create_connection()} when \code{con} is NULL. Default: list().}
 }
 \value{
 A \code{data.table} containing the downloaded rows.
@@ -46,5 +52,14 @@ hdr <- simple_download(
   year_col = "LANDYR",
   years = 2020:2023
 )
+
+# Download using a provided connection (e.g., DSN connection)
+con <- create_dsn_connection("PIRO LOTUS")
+catch <- simple_download(
+  table = "LDS_CATCH_V",
+  schema = "newobs",
+  con = con
+)
+DBI::dbDisconnect(con)
 }
 }

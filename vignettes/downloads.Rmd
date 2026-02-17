@@ -147,3 +147,82 @@ The parallel download strategy:
 This approach keeps the total number of concurrent database connections equal
 to the number of cores, which is friendlier to the database than opening one
 connection per year.
+
+## Downloading observer data
+
+In addition to logbook data, you can download observer data from the PIRO LOTUS
+database. Observer tables do not use year-based partitioning, so they are
+downloaded as full tables.
+
+### Using the convenience function
+
+The `download_observer_tables()` function provides a simple workflow for
+downloading the most commonly used observer tables:
+
+```{r}
+# Download default tables (LDS_SET_ENVIRON_V, LDS_CATCH_V, LDS_GEAR_CFG_V)
+obs <- download_observer_tables()
+
+# Access individual tables from the returned list
+catch <- obs[["LDS_CATCH_V"]]
+environ <- obs[["LDS_SET_ENVIRON_V"]]
+```
+
+To save results to disk:
+
+```{r}
+# Save with timestamps (TABLE_YYYYMMDDHHMMSS.csv)
+obs <- download_observer_tables(
+  output_dir = "obs-data",
+  timestamp = TRUE
+)
+
+# Save without timestamps (TABLE.csv)
+obs <- download_observer_tables(
+  output_dir = "obs-data",
+  timestamp = FALSE
+)
+```
+
+You can also specify custom tables:
+
+```{r}
+obs <- download_observer_tables(
+  tables = c("LDS_CATCH_V", "LDS_SET_ENVIRON_V"),
+  output_dir = "obs-data"
+)
+```
+
+### Using simple_download() with a DSN connection
+
+For more control, you can use `simple_download()` with a DSN connection. This
+is useful for custom queries or when you need to manage the connection
+lifecycle yourself:
+
+```{r}
+# Open a connection
+con <- create_dsn_connection("PIRO LOTUS")
+
+# Download multiple tables using the same connection
+catch <- simple_download(
+  table = "LDS_CATCH_V",
+  schema = "newobs",
+  con = con
+)
+
+environ <- simple_download(
+  table = "LDS_SET_ENVIRON_V",
+  schema = "newobs",
+  con = con
+)
+
+# Close connection when finished
+DBI::dbDisconnect(con)
+```
+
+### Important notes
+
+- Observer tables are downloaded in full (no year filtering needed)
+- You must have the **PIRO LOTUS** DSN configured (see `vignette("connections")`)
+- You must be on the **PIFSC network** or **NOAA VPN**
+- Tables are in the `newobs` schema, not `llds`
