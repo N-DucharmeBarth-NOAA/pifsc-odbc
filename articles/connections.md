@@ -112,3 +112,67 @@ Or use the standard DBI approach:
 ``` r
 DBI::dbDisconnect(con)
 ```
+
+## Connecting via DSN
+
+In addition to Oracle database connections, you can connect to other
+databases using pre-configured ODBC Data Source Names (DSNs). This is
+particularly useful for databases that use Windows authentication or
+other authentication methods that do not require credentials to be
+passed from R.
+
+### When to use DSN connections
+
+- **SQL Server databases** using Windows NT authentication (e.g., PIRO
+  LOTUS observer database)
+- Any database where a system administrator has pre-configured an ODBC
+  DSN
+- Databases requiring authentication methods not supported by direct
+  connections
+
+### Setting up a DSN for PIRO LOTUS
+
+To access the PIRO LOTUS observer database, you need to configure an
+ODBC DSN on Windows. This only needs to be done once per machine:
+
+1.  Open **ODBC Data Source Administrator (64-bit)** from Windows
+2.  Go to the **User DSN** tab and click **Add**
+3.  Select **SQL Server** driver and click **Finish**
+4.  Enter the following details:
+    - **Name**: `PIRO LOTUS`
+    - **Server**: `PIRO-S-SQLPROD1.NMFS.LOCAL,11433`
+5.  Click **Next**, select **With Windows NT authentication**, click
+    **Next**
+6.  Check **Change the default database to**: `LOTUS`
+7.  Click **Next**, enable:
+    - **Use ANSI quoted identifiers**
+    - **Use ANSI nulls, paddings and warnings**
+8.  Click **Next**, optionally enable **Perform translation for
+    character data**
+9.  Click **Finish**, then **Test Data Source** to verify the connection
+
+### Using DSN connections in R
+
+Once the DSN is configured, connecting is simple:
+
+``` r
+library(pifsc.odbc)
+
+# Connect to PIRO LOTUS observer database
+con <- create_dsn_connection("PIRO LOTUS")
+
+# List available tables
+DBI::dbListTables(con)
+
+# Query observer data
+catch <- DBI::dbGetQuery(con, "SELECT * FROM newobs.LDS_CATCH_V")
+
+# Disconnect when finished
+DBI::dbDisconnect(con)
+```
+
+### Requirements
+
+- You must be connected to the **PIFSC network** or **NOAA VPN**
+- Windows authentication is handled automatically by the DSN
+- No keyring credentials are needed for DSN connections

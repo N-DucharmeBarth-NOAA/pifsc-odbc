@@ -162,6 +162,102 @@ especially useful in scripts and parallel workers:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
 </div>
+<div class="section level2">
+<h2 id="connecting-via-dsn">Connecting via DSN<a class="anchor" aria-label="anchor" href="#connecting-via-dsn"></a>
+</h2>
+<p>In addition to Oracle database connections, you can connect to other
+databases using pre-configured ODBC Data Source Names (DSNs). This is
+particularly useful for databases that use Windows authentication or
+other authentication methods that do not require credentials to be
+passed from R.</p>
+<div class="section level3">
+<h3 id="when-to-use-dsn-connections">When to use DSN connections<a class="anchor" aria-label="anchor" href="#when-to-use-dsn-connections"></a>
+</h3>
+<ul>
+<li>
+<strong>SQL Server databases</strong> using Windows NT
+authentication (e.g., PIRO LOTUS observer database)</li>
+<li>Any database where a system administrator has pre-configured an ODBC
+DSN</li>
+<li>Databases requiring authentication methods not supported by direct
+connections</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="setting-up-a-dsn-for-piro-lotus">Setting up a DSN for PIRO LOTUS<a class="anchor" aria-label="anchor" href="#setting-up-a-dsn-for-piro-lotus"></a>
+</h3>
+<p>To access the PIRO LOTUS observer database, you need to configure an
+ODBC DSN on Windows. This only needs to be done once per machine:</p>
+<ol style="list-style-type: decimal">
+<li>Open <strong>ODBC Data Source Administrator (64-bit)</strong> from
+Windows</li>
+<li>Go to the <strong>User DSN</strong> tab and click
+<strong>Add</strong>
+</li>
+<li>Select <strong>SQL Server</strong> driver and click
+<strong>Finish</strong>
+</li>
+<li>Enter the following details:
+<ul>
+<li>
+<strong>Name</strong>: <code>PIRO LOTUS</code>
+</li>
+<li>
+<strong>Server</strong>:
+<code>PIRO-S-SQLPROD1.NMFS.LOCAL,11433</code>
+</li>
+</ul>
+</li>
+<li>Click <strong>Next</strong>, select <strong>With Windows NT
+authentication</strong>, click <strong>Next</strong>
+</li>
+<li>Check <strong>Change the default database to</strong>:
+<code>LOTUS</code>
+</li>
+<li>Click <strong>Next</strong>, enable:
+<ul>
+<li><strong>Use ANSI quoted identifiers</strong></li>
+<li><strong>Use ANSI nulls, paddings and warnings</strong></li>
+</ul>
+</li>
+<li>Click <strong>Next</strong>, optionally enable <strong>Perform
+translation for character data</strong>
+</li>
+<li>Click <strong>Finish</strong>, then <strong>Test Data
+Source</strong> to verify the connection</li>
+</ol>
+</div>
+<div class="section level3">
+<h3 id="using-dsn-connections-in-r">Using DSN connections in R<a class="anchor" aria-label="anchor" href="#using-dsn-connections-in-r"></a>
+</h3>
+<p>Once the DSN is configured, connecting is simple:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://n-ducharmebarth-noaa.github.io/pifsc-odbc/">pifsc.odbc</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Connect to PIRO LOTUS observer database</span></span>
+<span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/create_dsn_connection.html">create_dsn_connection</a></span><span class="op">(</span><span class="st">"PIRO LOTUS"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># List available tables</span></span>
+<span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbListTables.html" class="external-link">dbListTables</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Query observer data</span></span>
+<span><span class="va">catch</span> <span class="op">&lt;-</span> <span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbGetQuery.html" class="external-link">dbGetQuery</a></span><span class="op">(</span><span class="va">con</span>, <span class="st">"SELECT * FROM newobs.LDS_CATCH_V"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Disconnect when finished</span></span>
+<span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbDisconnect.html" class="external-link">dbDisconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="requirements">Requirements<a class="anchor" aria-label="anchor" href="#requirements"></a>
+</h3>
+<ul>
+<li>You must be connected to the <strong>PIFSC network</strong> or
+<strong>NOAA VPN</strong>
+</li>
+<li>Windows authentication is handled automatically by the DSN</li>
+<li>No keyring credentials are needed for DSN connections</li>
+</ul>
+</div>
+</div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
 </div>
