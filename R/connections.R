@@ -2,6 +2,9 @@
 #' Functions for establishing and managing Oracle database connections
 #'   using keyring-based credential storage.
 #' @name connections
+#' @importFrom DBI dbConnect dbDisconnect dbGetQuery
+#' @importFrom keyring key_set key_get
+#' @importFrom odbc odbc
 NULL
 
 #' Set up database credentials in the system keyring

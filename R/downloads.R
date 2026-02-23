@@ -3,8 +3,15 @@
 #'   with automatic year-based partitioning and chunked downloads across
 #'   multiple cores.
 #' @name downloads
-#' @importFrom foreach %dopar%
+#' @importFrom foreach %dopar% foreach
+#' @importFrom DBI dbGetQuery dbConnect dbDisconnect
+#' @importFrom doParallel registerDoParallel
+#' @importFrom parallel detectCores makeCluster stopCluster
+#' @importFrom data.table rbindlist as.data.table fwrite data.table
 NULL
+
+# Declare variables used in foreach loops to pass R CMD check
+utils::globalVariables(c("year_chunk"))
 
 
 #' Get available years for a table

@@ -1,6 +1,8 @@
 #' Table Preview Functions
 #' Functions for quickly inspecting database tables without full download.
 #' @name peek
+#' @importFrom DBI dbGetQuery dbListFields
+#' @importFrom utils str
 NULL
 
 #' Peek at a database table
@@ -78,15 +80,33 @@ peek_columns <- function(con, table, schema = "llds") {
   # Determine full table name with schema
   if (grepl("\\.", table)) {
     full_table <- table
-  } else {
-    full_table <- paste0(schema, ".", table)
+    parts <- strsplit(table, "\\.")[[1]]
+    schema <- parts[1]
+    table <- parts[2]
   }
 
-  # Get column info
-  col_info <- DBI::dbGetFields(con, full_table)
+  # Get column names
+  col_names <- DBI::dbListFields(con, paste0(schema, ".", table))
+
+  # Try to get column types from Oracle data dictionary
+  type_sql <- paste0(
+    "SELECT COLUMN_NAME, DATA_TYPE FROM all_tab_columns ",
+    "WHERE owner = '", toupper(schema), "' AND table_name = '", toupper(table), "' ",
+    "ORDER BY COLUMN_ID"
+  )
+  
+  col_types <- tryCatch(
+    {
+      DBI::dbGetQuery(con, type_sql)
+    },
+    error = function(e) {
+      # If query fails, return data.frame with NA types
+      data.frame(COLUMN_NAME = col_names, DATA_TYPE = rep(NA_character_, length(col_names)))
+    }
+  )
 
   # Try to get record count
-  count_sql <- paste0("SELECT COUNT(*) as row_count FROM ", full_table)
+  count_sql <- paste0("SELECT COUNT(*) as row_count FROM ", schema, ".", table)
   tryCatch(
     {
       count_result <- DBI::dbGetQuery(con, count_sql)
@@ -98,23 +118,29 @@ peek_columns <- function(con, table, schema = "llds") {
   )
 
   # Display info
-  cat("Table: ", full_table, "\n")
+  cat("Table: ", schema, ".", table, "\n", sep = "")
   if (!is.na(row_count)) {
     cat("Total rows: ", format(row_count, big.mark = ","), "\n")
   }
-  cat("Total columns: ", length(col_info), "\n\n")
+  cat("Total columns: ", length(col_names), "\n\n")
   cat("Columns:\n")
-  for (i in seq_along(col_info)) {
-    cat(sprintf("  %2d. %-30s [%s]\n", i, names(col_info)[i], col_info[i]))
+  for (i in seq_along(col_names)) {
+    col_name <- col_names[i]
+    col_type <- col_types$DATA_TYPE[i]
+    if (is.na(col_type)) {
+      col_type <- "unknown"
+    }
+    cat(sprintf("  %2d. %-30s [%s]\n", i, col_name, col_type))
   }
 
   # Return metadata invisibly
   metadata <- data.frame(
-    column_name = names(col_info),
-    column_type = unname(col_info),
+    column_name = col_names,
+    column_type = col_types$DATA_TYPE,
     row.names = NULL
   )
   invisible(metadata)
+
 }
 
 
