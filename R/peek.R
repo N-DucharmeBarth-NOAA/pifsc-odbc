@@ -1,7 +1,7 @@
 #' Table Preview Functions
 #' Functions for quickly inspecting database tables without full download.
 #' @name peek
-#' @importFrom DBI dbGetQuery dbListFields
+#' @importFrom DBI dbGetQuery
 #' @importFrom utils str
 NULL
 
@@ -85,10 +85,7 @@ peek_columns <- function(con, table, schema = "llds") {
     table <- parts[2]
   }
 
-  # Get column names
-  col_names <- DBI::dbListFields(con, paste0(schema, ".", table))
-
-  # Try to get column types from Oracle data dictionary
+  # Get column info from Oracle data dictionary (more reliable than dbListFields)
   type_sql <- paste0(
     "SELECT COLUMN_NAME, DATA_TYPE FROM all_tab_columns ",
     "WHERE owner = '", toupper(schema), "' AND table_name = '", toupper(table), "' ",
@@ -100,20 +97,29 @@ peek_columns <- function(con, table, schema = "llds") {
       DBI::dbGetQuery(con, type_sql)
     },
     error = function(e) {
-      # If query fails, return data.frame with NA types
-      data.frame(COLUMN_NAME = col_names, DATA_TYPE = rep(NA_character_, length(col_names)))
+      stop("Could not query columns for ", schema, ".", table, ": ", e$message)
     }
   )
 
+  if (nrow(col_types) == 0) {
+    stop("No columns found for table ", schema, ".", table, 
+         ". Check that the table name and schema are correct.")
+  }
+
+  col_names <- col_types$COLUMN_NAME
+
   # Try to get record count
+  row_count <- NA_integer_
   count_sql <- paste0("SELECT COUNT(*) as row_count FROM ", schema, ".", table)
   tryCatch(
     {
       count_result <- DBI::dbGetQuery(con, count_sql)
-      row_count <- count_result$row_count[1]
+      if (is.data.frame(count_result) && nrow(count_result) > 0 && "row_count" %in% names(count_result)) {
+        row_count <- as.integer(count_result$row_count[1])
+      }
     },
     error = function(e) {
-      row_count <<- NA
+      # row_count remains NA_integer_
     }
   )
 
