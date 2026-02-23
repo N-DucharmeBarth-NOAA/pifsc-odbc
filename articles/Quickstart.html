@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">pifsc.odbc</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,6 +38,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/connections.html">Database Connections</a></li>
     <li><a class="dropdown-item" href="../articles/downloads.html">Parallel Downloads</a></li>
+    <li><a class="dropdown-item" href="../articles/peek.html">Table Preview Functions</a></li>
     <li><a class="dropdown-item" href="../articles/Quickstart.html">Quickstart</a></li>
   </ul>
 </li>
@@ -162,10 +163,32 @@ needs to be done once per machine:</p>
 </div>
 </div>
 <div class="section level2">
+<h2 id="exploring-tables-with-peek-functions">Exploring tables with peek functions<a class="anchor" aria-label="anchor" href="#exploring-tables-with-peek-functions"></a>
+</h2>
+<p>Before downloading large tables, use the peek functions to explore
+structure and content:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/create_connection.html">create_connection</a></span><span class="op">(</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># View first 10 rows and structure</span></span>
+<span><span class="fu"><a href="../reference/peek_table.html">peek_table</a></span><span class="op">(</span><span class="va">con</span>, table <span class="op">=</span> <span class="st">"LLDS_HDR_20240315HAC"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># View just column metadata (efficient for very large tables)</span></span>
+<span><span class="fu"><a href="../reference/peek_columns.html">peek_columns</a></span><span class="op">(</span><span class="va">con</span>, table <span class="op">=</span> <span class="st">"LLDS_HDR_20240315HAC"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Get a random sample (efficient for huge tables)</span></span>
+<span><span class="va">sample_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/peek_sample.html">peek_sample</a></span><span class="op">(</span><span class="va">con</span>, table <span class="op">=</span> <span class="st">"BIG_TABLE"</span>, percent <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/safe_disconnect.html">safe_disconnect</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span></span></code></pre></div>
+<p>These functions are especially useful for: - Understanding table
+structure before writing queries - Inspecting data types and column
+names - Validating data in large tables without pulling all rows</p>
+</div>
+<div class="section level2">
 <h2 id="working-with-connections-directly">Working with connections directly<a class="anchor" aria-label="anchor" href="#working-with-connections-directly"></a>
 </h2>
 <p>If you need more control, you can manage connections yourself:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/create_connection.html">create_connection</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Use standard DBI functions</span></span>

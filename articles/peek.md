@@ -1,0 +1,200 @@
+# Table Preview Functions
+
+``` r
+library(pifsc.odbc)
+```
+
+## Overview
+
+The `peek_*` functions provide quick ways to inspect database tables
+without downloading all the data. They’re useful for exploratory
+analysis and understanding table structure before running expensive
+queries.
+
+## peek_table()
+
+Shows the structure and first n rows of a table.
+
+``` r
+con <- create_connection()
+
+# Peek at default 10 rows
+peek_table(con, table = "LLDS_HDR_20240315HAC")
+
+# Peek at 5 rows
+peek_table(con, table = "LLDS_HDR_20240315HAC", n_rows = 5)
+
+# Using schema-qualified table name
+peek_table(con, table = "myschema.mytable", n_rows = 20)
+
+# Capture the returned data for further use
+df <- peek_table(con, table = "MY_TABLE", n_rows = 100)
+summary(df)
+
+safe_disconnect(con)
+```
+
+**Output includes:** - Table name and dimensions - Data structure
+(columns, types, preview via
+[`str()`](https://rdrr.io/r/utils/str.html)) - First n rows as a
+data.frame
+
+## peek_columns()
+
+Shows table metadata and column information without loading data.
+
+``` r
+con <- create_connection()
+
+# Get column information
+meta <- peek_columns(con, table = "LLDS_HDR_20240315HAC")
+
+# Returns metadata invisibly - can be captured for programmatic use
+str(meta)
+
+safe_disconnect(con)
+```
+
+**Output includes:** - Total row count - Column count - Detailed list of
+all columns with their data types
+
+## peek_sample()
+
+Retrieves a random sample of rows using SQL’s SAMPLE clause.
+
+``` r
+con <- create_connection()
+
+# Get a 1% random sample
+sample_data <- peek_sample(con, table = "BIG_TABLE", percent = 1)
+
+# Get a 5% random sample
+sample_data <- peek_sample(con, table = "BIG_TABLE", percent = 5)
+
+# Further analysis on sampled data
+hist(sample_data$some_numeric_column)
+
+safe_disconnect(con)
+```
+
+**Advantages:** - More efficient than ROWNUM for large tables - True
+random sampling via Oracle’s SAMPLE clause - Returns a data.frame for
+further analysis
+
+## Use Cases
+
+### Quick Exploration
+
+Use
+[`peek_table()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek_table.md)
+to quickly see what’s in a table before committing to a large download:
+
+``` r
+con <- create_connection()
+peek_table(con, table = "NEW_TABLE_TO_EXPLORE")
+safe_disconnect(con)
+```
+
+### Data Validation
+
+Use
+[`peek_columns()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek_columns.md)
+to verify expected columns and types before building queries:
+
+``` r
+con <- create_connection()
+col_info <- peek_columns(con, table = "LLDS_HDR_20240315HAC")
+# Check that expected columns exist
+expected_cols <- c("LANDYR", "TRIP_ID", "VESSEL_ID")
+all(expected_cols %in% col_info$column_name)
+safe_disconnect(con)
+```
+
+### Large Table Analysis
+
+Use
+[`peek_sample()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek_sample.md)
+to understand data distribution in billion-row tables without full
+download:
+
+``` r
+con <- create_connection()
+
+# Get sense of data distribution
+sample <- peek_sample(con, table = "HUGE_TABLE", percent = 0.1)
+summary(sample)
+table(sample$status_code)
+
+safe_disconnect(con)
+```
+
+### Query Planning
+
+Check data types and sample values before writing complex queries:
+
+``` r
+con <- create_connection()
+
+# Verify column types before building SQL
+peek_columns(con, table = "SOURCE_TABLE")
+
+# Look at sample data to understand format
+peek_table(con, table = "SOURCE_TABLE", n_rows = 5)
+
+safe_disconnect(con)
+```
+
+## Schema Handling
+
+Functions accept schema in two ways:
+
+``` r
+con <- create_connection()
+
+# Explicit schema parameter (default: "llds")
+peek_table(con, table = "MY_TABLE", schema = "custom_schema")
+
+# Schema-qualified table name (takes precedence over schema parameter)
+peek_table(con, table = "custom_schema.MY_TABLE")
+
+safe_disconnect(con)
+```
+
+## Return Values
+
+All peek functions invisibly return data for further use:
+
+``` r
+con <- create_connection()
+
+# Capture the returned data
+df <- peek_table(con, table = "MY_TABLE", n_rows = 100)
+col_info <- peek_columns(con, table = "MY_TABLE")
+sample_data <- peek_sample(con, table = "MY_TABLE", percent = 1)
+
+# Later use the data
+summary(df)
+nrow(df)
+colnames(df)
+str(col_info)
+
+safe_disconnect(con)
+```
+
+## Performance Considerations
+
+- **[`peek_table()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek_table.md)**:
+  Fast for any table size; retrieves only first n rows
+- **[`peek_columns()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek_columns.md)**:
+  Metadata only; generally fast but COUNT(\*) across very large tables
+  can be slow
+- **[`peek_sample()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek_sample.md)**:
+  Efficient even for billion-row tables; uses Oracle’s native SAMPLE
+  clause
+
+Choose based on what you need: - Just structure? →
+[`peek_columns()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek_columns.md) -
+See first rows? →
+[`peek_table()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek_table.md) -
+Understand distribution? →
+[`peek_sample()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek_sample.md)

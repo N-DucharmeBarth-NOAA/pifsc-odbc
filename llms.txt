@@ -152,6 +152,15 @@ Oceanographic and Atmospheric Administration](https://www.noaa.gov) \|
   : Download a table in parallel by year
 - [`parallel_dsn_download()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/parallel_dsn_download.md)
   : Download a DSN table in parallel by year
+- [`peek`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek.md)
+  : Table Preview Functions Functions for quickly inspecting database
+  tables without full download.
+- [`peek_columns()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek_columns.md)
+  : Peek at table shape and metadata
+- [`peek_sample()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek_sample.md)
+  : Quick sample from a table
+- [`peek_table()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek_table.md)
+  : Peek at a database table
 - [`safe_disconnect()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/safe_disconnect.md)
   : Safely disconnect from a database
 - [`setup_credentials()`](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/setup_credentials.md)
@@ -167,4 +176,6 @@ Oceanographic and Atmospheric Administration](https://www.noaa.gov) \|
   Connections](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles/connections.md):
 - [Parallel
   Downloads](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles/downloads.md):
+- [Table Preview
+  Functions](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles/peek.md):
 - [Quickstart](https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles/Quickstart.md):

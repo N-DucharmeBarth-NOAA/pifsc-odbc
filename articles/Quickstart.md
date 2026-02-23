@@ -91,6 +91,30 @@ hdr <- simple_download(
 )
 ```
 
+## Exploring tables with peek functions
+
+Before downloading large tables, use the peek functions to explore
+structure and content:
+
+``` r
+con <- create_connection()
+
+# View first 10 rows and structure
+peek_table(con, table = "LLDS_HDR_20240315HAC")
+
+# View just column metadata (efficient for very large tables)
+peek_columns(con, table = "LLDS_HDR_20240315HAC")
+
+# Get a random sample (efficient for huge tables)
+sample_data <- peek_sample(con, table = "BIG_TABLE", percent = 1)
+
+safe_disconnect(con)
+```
+
+These functions are especially useful for: - Understanding table
+structure before writing queries - Inspecting data types and column
+names - Validating data in large tables without pulling all rows
+
 ## Working with connections directly
 
 If you need more control, you can manage connections yourself:

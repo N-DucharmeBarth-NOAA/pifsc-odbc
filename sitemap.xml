@@ -6,6 +6,7 @@
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles/connections.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles/downloads.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles/index.html</loc></url>
+<url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/articles/peek.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/authors.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/index.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/connections.html</loc></url>
@@ -19,6 +20,10 @@
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/optimal_cores.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/parallel_download.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/parallel_dsn_download.html</loc></url>
+<url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek.html</loc></url>
+<url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek_columns.html</loc></url>
+<url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek_sample.html</loc></url>
+<url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/peek_table.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/safe_disconnect.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/setup_credentials.html</loc></url>
 <url><loc>https://n-ducharmebarth-noaa.github.io/pifsc-odbc/reference/simple_download.html</loc></url>
